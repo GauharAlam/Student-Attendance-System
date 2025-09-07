@@ -3,9 +3,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const sendEmail = require("../utils/sendEmail");
 
+
+
 // Register a new user
 exports.register = async (req, res) => {
-  const { name, email, password, role } = req.body; // 👈 Add role
+  const { name, email, password ,role } = req.body;
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -15,32 +17,7 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // create user as unverified
-    const user = new User({ name, email, password: hashedPassword, role, verified: false }); // 👈 Pass role to the model
-    await user.save();
-    
-    // ... (rest of the registration logic)
-    res.status(201).json({
-      success: true,
-      message: 'User registered successfully. Please verify your account via OTP.',
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// Register a new user
-exports.register = async (req, res) => {
-  const { name, email, password } = req.body;
-  try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // create user as unverified
-    const user = new User({ name, email, password: hashedPassword, verified: false });
+    const user = new User({ name, email, password: hashedPassword, verified: false,role });
     await user.save();
 
     // Generate and send OTP

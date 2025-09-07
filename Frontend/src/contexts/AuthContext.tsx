@@ -11,10 +11,10 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<User | null>; // Return User or null
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>; // 👈 Add this
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,23 +23,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // ... (useEffect remains the same)
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // You might want to add a call here to verify the token and get user info
+      // For now, we'll assume the token is valid if it exists
+      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+  }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const response = await apiLogin({ email, password });
-      if (response.success && response.token && response.user) {
-        localStorage.setItem('token', response.token);
-        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${response.token}`;
-        const userData = response.user as User;
-        setUser(userData);
-        return userData; // Return the full user object
+      const { success, token, user: userData } = await apiLogin({ email, password });
+      if (success && token && userData) {
+        localStorage.setItem('token', token);
+        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        setUser(userData as User);
+        return true;
       }
-      return null; // Return null on failure
+      return false;
     } catch (error) {
       console.error('Login failed:', error);
-      return null; // Return null on error
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -56,7 +62,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     login,
     logout,
     isLoading,
-    setIsLoading,
+    setIsLoading, // 👈 Export this
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

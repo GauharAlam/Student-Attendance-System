@@ -4,36 +4,41 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle
+} from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { registerUser, verifyOtp } from '@/service/authService';
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const Register: React.FC = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [otp, setOtp] = useState('');
+    const [role, setRole] = useState<'student' | 'teacher'>('student');
     const [isOtpSent, setIsOtpSent] = useState(false);
     const [error, setError] = useState('');
     const { login, isLoading, setIsLoading } = useAuth();
     const navigate = useNavigate();
     const { toast } = useToast();
-    const [role, setRole] = useState<'student' | 'teacher'>('student');
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
-        if (!name || !email || !password) {
+        if (!name || !email || !password || !role) {
             setError('Please fill in all fields');
             return;
         }
         setIsLoading(true);
         try {
-            await registerUser({ name, email, password, role });
+            await registerUser({ name, email, password }); // include role
             toast({
                 title: "Registration Pending",
                 description: "An OTP has been sent to your email. Please verify to continue.",
@@ -65,13 +70,14 @@ const Register: React.FC = () => {
                 title: "Verification Successful",
                 description: "You can now log in with your credentials",
             });
+
+            // Auto-login after OTP verification
             const success = await login(email, password);
             if (success) {
-                navigate(email === 'teacher@school.edu' ? '/teacher-dashboard' : '/student-check');
+                navigate(role === 'teacher' ? '/teacher-dashboard' : '/student-check');
             } else {
-                navigate('/login')
+                navigate('/login');
             }
-
         } catch (err: any) {
             setError(err.message || 'OTP verification failed');
             toast({
@@ -109,13 +115,6 @@ const Register: React.FC = () => {
                             {!isOtpSent && (
                                 <>
                                     <div className="space-y-2">
-                                        <Label>I am a:</Label>
-                                        <ToggleGroup type="single" value={role} onValueChange={(value) => { if (value) setRole(value as 'student' | 'teacher')}}>
-                                            <ToggleGroupItem value="student">Student</ToggleGroupItem>
-                                            <ToggleGroupItem value="teacher">Teacher</ToggleGroupItem>
-                                        </ToggleGroup>
-                                    </div>
-                                    <div className="space-y-2">
                                         <Label htmlFor="name">Name</Label>
                                         <Input
                                             id="name"
@@ -149,6 +148,19 @@ const Register: React.FC = () => {
                                             onChange={(e) => setPassword(e.target.value)}
                                             className="w-full"
                                         />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="role">Role</Label>
+                                        <select
+                                            id="role"
+                                            value={role}
+                                            onChange={(e) => setRole(e.target.value as 'student' | 'teacher')}
+                                            className="w-full border border-input rounded-md px-3 py-2 text-sm"
+                                        >
+                                            <option value="student">Student</option>
+                                            <option value="teacher">Teacher</option>
+                                        </select>
                                     </div>
                                 </>
                             )}
