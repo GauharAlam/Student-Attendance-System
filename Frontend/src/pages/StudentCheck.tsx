@@ -1,278 +1,137 @@
-import React, { useState } from 'react';
-import Layout from '../components/Layout';
+import React from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { useAttendance } from '../contexts/AttendanceContext';
-import { mockStudents } from '../data/mockData';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Search, User, Calendar as CalendarDays, TrendingUp } from 'lucide-react';
-import { format } from 'date-fns';
+import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 const StudentCheck: React.FC = () => {
-  const [rollNumber, setRollNumber] = useState('');
-  const [fromDate, setFromDate] = useState<Date>();
-  const [toDate, setToDate] = useState<Date>();
-  const [attendanceRecords, setAttendanceRecords] = useState<Array<{date: string, status: 'present' | 'absent'}>>([]);
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
-  const { getStudentAttendance } = useAttendance();
-  const { toast } = useToast();
+    const { user, isLoading } = useAuth(); // Destructure isLoading
+    const { attendanceData } = useAttendance();
 
-  const handleViewAttendance = () => {
-    if (!rollNumber || !fromDate || !toDate) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in roll number and both dates.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const student = mockStudents.find(s => s.rollNo.toLowerCase() === rollNumber.toLowerCase());
-    
-    if (!student) {
-      toast({
-        title: "Student Not Found",
-        description: "No student found with this roll number.",
-        variant: "destructive",
-      });
-      setAttendanceRecords([]);
-      setSelectedStudent(null);
-      return;
-    }
-
-    const records = getStudentAttendance(
-      student.id,
-      format(fromDate, 'yyyy-MM-dd'),
-      format(toDate, 'yyyy-MM-dd')
-    );
-
-    setAttendanceRecords(records);
-    setSelectedStudent(student);
-
-    toast({
-      title: "Attendance Retrieved",
-      description: `Found ${records.length} attendance records for ${student.name}.`,
-    });
-  };
-
-  const calculateStats = () => {
-    if (attendanceRecords.length === 0) return { present: 0, absent: 0, percentage: 0 };
-    
-    const present = attendanceRecords.filter(r => r.status === 'present').length;
-    const absent = attendanceRecords.length - present;
-    const percentage = (present / attendanceRecords.length) * 100;
-    
-    return { present, absent, percentage };
-  };
-
-  const stats = calculateStats();
-
-  return (
-    <Layout title="Check Attendance">
-      <div className="space-y-6">
-        {/* Search Card */}
-        <Card className="card-shadow">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Search className="w-5 h-5" />
-              <span>Search Attendance Records</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="rollNumber">Roll Number</Label>
-                <Input
-                  id="rollNumber"
-                  placeholder="Enter roll number (e.g., CS001)"
-                  value={rollNumber}
-                  onChange={(e) => setRollNumber(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>From Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !fromDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {fromDate ? format(fromDate, "PPP") : <span>Select from date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={fromDate}
-                      onSelect={setFromDate}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="space-y-2">
-                <Label>To Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !toDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {toDate ? format(toDate, "PPP") : <span>Select to date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={toDate}
-                      onSelect={setToDate}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-
-            <Button onClick={handleViewAttendance} className="btn-primary">
-              <Search className="w-4 h-4 mr-2" />
-              View Attendance
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Student Info and Stats */}
-        {selectedStudent && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card className="card-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Student</CardTitle>
-                <User className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-lg font-bold">{selectedStudent.name}</div>
-                <p className="text-sm text-muted-foreground">{selectedStudent.rollNo}</p>
-              </CardContent>
-            </Card>
-
-            <Card className="card-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Days</CardTitle>
-                <CalendarDays className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{attendanceRecords.length}</div>
-              </CardContent>
-            </Card>
-
-            <Card className="card-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Present Days</CardTitle>
-                <div className="h-4 w-4 bg-success rounded-full" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-success">{stats.present}</div>
-              </CardContent>
-            </Card>
-
-            <Card className="card-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Attendance %</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className={cn(
-                  "text-2xl font-bold",
-                  stats.percentage >= 75 ? "text-success" : 
-                  stats.percentage >= 50 ? "text-warning" : "text-destructive"
-                )}>
-                  {stats.percentage.toFixed(1)}%
+    // 1. Handle the loading state
+    if (isLoading) {
+        return (
+            <Layout title="Loading...">
+                <div className="flex justify-center items-center h-64">
+                    <Loader2 className="w-8 h-8 animate-spin" />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+            </Layout>
+        );
+    }
 
-        {/* Attendance Records Table */}
-        {attendanceRecords.length > 0 && (
-          <Card className="card-shadow">
-            <CardHeader>
-              <CardTitle>Attendance Records</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium">Date</th>
-                      <th className="text-left py-3 px-4 font-medium">Day</th>
-                      <th className="text-center py-3 px-4 font-medium">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {attendanceRecords.map((record, index) => {
-                      const date = new Date(record.date);
-                      const dayName = format(date, 'EEEE');
-                      
-                      return (
-                        <tr key={index} className="border-b hover:bg-muted/50">
-                          <td className="py-3 px-4 font-medium">
-                            {format(date, 'PPP')}
-                          </td>
-                          <td className="py-3 px-4 text-muted-foreground">
-                            {dayName}
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            <span className={cn(
-                              "px-3 py-1 rounded-full text-sm font-medium",
-                              record.status === 'present' 
-                                ? "bg-success/10 text-success" 
-                                : "bg-destructive/10 text-destructive"
-                            )}>
-                              {record.status === 'present' ? 'Present' : 'Absent'}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+    // 2. Handle the case where there is no user after loading
+    if (!user) {
+        return (
+            <Layout title="Student Attendance">
+                <div className="text-center">
+                    <p>Could not load student data. Please try logging in again.</p>
+                </div>
+            </Layout>
+        );
+    }
 
-        {/* Empty State */}
-        {rollNumber && fromDate && toDate && attendanceRecords.length === 0 && selectedStudent === null && (
-          <Card className="card-shadow">
-            <CardContent className="py-8 text-center">
-              <div className="text-muted-foreground">
-                <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium mb-2">No Records Found</p>
-                <p>Please check the roll number and try again.</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </Layout>
-  );
+    // Calculate attendance percentage using the logged-in user's ID
+    let totalDays = 0;
+    let presentCount = 0;
+
+    Object.values(attendanceData).forEach(dayAttendance => {
+        // This line is now safe because we've already checked for isLoading and user
+        if (dayAttendance[user.id]) {
+            totalDays++;
+            if (dayAttendance[user.id] === 'present') {
+                presentCount++;
+            }
+        }
+    });
+
+    const attendancePercentage = totalDays > 0 ? (presentCount / totalDays) * 100 : 0;
+
+    return (
+        <Layout title="Your Attendance">
+            <div className="space-y-6">
+                <Card className="card-shadow">
+                    <CardHeader>
+                        <CardTitle className="text-xl">Welcome, {user.name}!</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                            <div>
+                                <p className="text-sm text-muted-foreground">Roll No</p>
+                                <p className="text-lg font-bold">{user.rollNo || 'Not Assigned'}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground">Total Classes</p>
+                                <p className="text-lg font-bold">{totalDays}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground">Classes Attended</p>
+                                <p className="text-lg font-bold text-success">{presentCount}</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="card-shadow">
+                    <CardHeader>
+                        <CardTitle>Attendance Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div>
+                            <div className="flex justify-between mb-1">
+                                <span className="text-base font-medium text-primary">Attendance</span>
+                                <span className="text-sm font-medium text-primary">{attendancePercentage.toFixed(1)}%</span>
+                            </div>
+                            <Progress value={attendancePercentage} className="w-full" />
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                            You were present for {presentCount} out of {totalDays} classes. Keep it up!
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Daily Status</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="border-b">
+                                        <th className="text-left py-3 px-4 font-medium">Date</th>
+                                        <th className="text-center py-3 px-4 font-medium">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {Object.entries(attendanceData)
+                                        .map(([date, dayAttendance]) => {
+                                            const status = dayAttendance[user.id];
+                                            if (!status) return null;
+
+                                            return (
+                                                <tr key={date} className="border-b hover:bg-muted/50">
+                                                    <td className="py-3 px-4">{date}</td>
+                                                    <td className={cn(
+                                                        "py-3 px-4 text-center font-medium",
+                                                        status === 'present' ? 'text-success' : 'text-destructive'
+                                                    )}>
+                                                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                        .reverse()}
+                                </tbody>
+                            </table>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        </Layout>
+    );
 };
 
 export default StudentCheck;

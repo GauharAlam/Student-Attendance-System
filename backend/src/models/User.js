@@ -21,7 +21,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters long"],
-      select: false, // 👈 Exclude password by default when querying
+      select: false, 
+    },
+    rollNo: { // Add this new field
+      type: String,
+      unique: true,
+      sparse: true, // Allows multiple null values, but unique if not null
+      default: null,
     },
     otp: {
       type: String,
@@ -33,21 +39,21 @@ const userSchema = new mongoose.Schema(
     },
     verified: {
       type: Boolean,
-      default: false, // 👈 prevents login until OTP verification
+      default: false, 
     },
     role: {
       type: String,
       enum: ["student", "teacher", "admin"],
       default: "student",
     },
-    isApproved: { // 👈 New field
+    isApproved: { 
       type: Boolean,
       default: function() {
         return this.role !== 'student';
       },
     },
   },
-  { timestamps: true } // 👈 createdAt, updatedAt automatically added
+  { timestamps: true } 
 );
 
 module.exports = mongoose.model("User", userSchema);

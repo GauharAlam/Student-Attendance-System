@@ -1,25 +1,20 @@
-import axiosInstance from "@/config/axiosInstance";
+import axiosInstance from '../config/axiosInstance';
+import { User } from '../types'; // 1. Import the User type
 
-interface Student {
-  _id: string;
-  name: string;
-  email: string;
-}
-
-export const getUnapprovedStudents = async (): Promise<Student[]> => {
-  try {
-    const response = await axiosInstance.get<Student[]>("/teacher/unapproved-students");
+// Define the function to get unapproved students
+export const getUnapprovedStudents = async (): Promise<User[]> => { // 2. Set the return type
+    const response = await axiosInstance.get('/teacher/unapproved-students');
     return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch students");
-  }
 };
 
-export const approveStudent = async (studentId: string): Promise<{ success: boolean; message: string }> => {
-  try {
-    const response = await axiosInstance.put(`/teacher/approve-student/${studentId}`);
+// Define the function to approve a student
+export const approveStudent = async (studentId: string) => {
+    const response = await axiosInstance.patch(`/teacher/approve-student/${studentId}`);
     return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to approve student");
-  }
+};
+
+// Define the function to get approved students
+export const getApprovedStudents = async (): Promise<User[]> => { // 3. Set the return type here as well
+    const response = await axiosInstance.get('/teacher/approved-students');
+    return response.data;
 };

@@ -1,53 +1,31 @@
-import axiosInstance from "@/config/axiosInstance";
+import axiosInstance from '../config/axiosInstance';
 
-interface userData {
-  name: string;
-  email: string;
-  password: string;
-}
-
-interface otpData {
-    email: string;
-    otp: string;
-}
-
-interface ApiResponse {
+// Define the structure of the data you expect from the login API
+interface LoginResponse {
   success: boolean;
   message: string;
-  token?: string;
-  user?: {
+  token: string;
+  user: {
     id: string;
     name: string;
     email: string;
+    role: 'student' | 'teacher';
+    rollNo?: string;
   };
 }
 
-export const registerUser = async (data: userData): Promise<ApiResponse> => {
-  try {
-    const response = await axiosInstance.post<ApiResponse>("/auth/register", data);
-    return response.data;
-  } catch (error: any) {
-    // normalize error
-    throw new Error(error.response?.data?.message || "Registration failed");
-  }
+export const loginUser = async (email: string, password: string) => {
+    // Tell Axios to expect the LoginResponse shape
+    const response = await axiosInstance.post<LoginResponse>('/auth/login', { email, password });
+    return response;
 };
 
-export const loginUser = async (data: Omit<userData, 'name'>): Promise<ApiResponse> => {
-    try {
-      const response = await axiosInstance.post<ApiResponse>("/auth/login", data);
-      return response.data;
-    } catch (error: any) {
-      // normalize error
-      throw new Error(error.response?.data?.message || "login failed");
-    }
-  };
-  
-  export const verifyOtp = async (data: otpData): Promise<ApiResponse> => {
-    try {
-      const response = await axiosInstance.post<ApiResponse>("/auth/verify-otp", data);
-      return response.data;
-    } catch (error: any) {
-      // normalize error
-      throw new Error(error.response?.data?.message || "OTP verification failed");
-    }
-  };
+export const registerUser = async (userData: object) => {
+    const response = await axiosInstance.post('/auth/register', userData);
+    return response.data;
+};
+
+export const verifyOtp = async (otpData: object) => {
+    const response = await axiosInstance.post('/auth/verify-otp', otpData);
+    return response.data;
+};

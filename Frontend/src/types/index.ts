@@ -10,14 +10,17 @@ export interface AttendanceRecord {
   date: string;
   status: 'present' | 'absent';
 }
-
 export interface User {
-  id: string;
-  email: string;
-  role: 'teacher' | 'student';
-  name: string;
+    _id: string;
+    name: string;
+    email: string;
+    rollNo?: string; // Make rollNo optional
+    role: 'student' | 'teacher' | 'admin';
+    isApproved: boolean;
+    verified: boolean;
+    createdAt: string;
+    updatedAt: string;
 }
-
 export interface AttendanceData {
   [date: string]: {
     [studentId: string]: 'present' | 'absent';

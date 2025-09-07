@@ -1,12 +1,11 @@
 const express = require('express');
-const router = express.Router();
-const { getUnapprovedStudents, approveStudent } = require('../controllers/teacherController');
+const { getUnapprovedStudents, approveStudent, getApprovedStudents } = require('../controllers/teacherController');
 const { protect, isTeacher } = require('../middleware/authMiddleware');
 
-// GET /api/teacher/unapproved-students
-router.get('/unapproved-students', protect, isTeacher, getUnapprovedStudents);
+const router = express.Router();
 
-// PUT /api/teacher/approve-student/:studentId
-router.put('/approve-student/:studentId', protect, isTeacher, approveStudent);
+router.get('/unapproved-students', protect, isTeacher, getUnapprovedStudents);
+router.patch('/approve-student/:studentId', protect, isTeacher, approveStudent);
+router.get('/approved-students', protect, isTeacher, getApprovedStudents); // Add this new route
 
 module.exports = router;
