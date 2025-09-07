@@ -1,0 +1,168 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Student Attendance System Design System */
+
+@layer base {
+  :root {
+    /* Core backgrounds */
+    --background: 210 20% 98%;
+    --foreground: 220 13% 18%;
+
+    /* Card system */
+    --card: 0 0% 100%;
+    --card-foreground: 220 13% 18%;
+
+    /* Popover system */
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 13% 18%;
+
+    /* Education-themed primary (professional blue) */
+    --primary: 213 94% 68%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 213 94% 58%;
+
+    /* Secondary (lighter blue-gray) */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 220 13% 18%;
+
+    /* Muted backgrounds */
+    --muted: 210 40% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    /* Accent (education highlight) */
+    --accent: 213 94% 68%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Status colors */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Form elements */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 213 94% 68%;
+
+    /* Design tokens */
+    --radius: 0.75rem;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(213 94% 68%), hsl(213 94% 78%));
+    --gradient-hero: linear-gradient(135deg, hsl(213 94% 68%) 0%, hsl(220 70% 50%) 100%);
+
+    /* Transitions */
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Core backgrounds */
+    --background: 220 13% 9%;
+    --foreground: 210 40% 98%;
+
+    /* Card system */
+    --card: 220 13% 12%;
+    --card-foreground: 210 40% 98%;
+
+    /* Popover system */
+    --popover: 220 13% 12%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Education-themed primary (brighter for dark mode) */
+    --primary: 213 94% 78%;
+    --primary-foreground: 220 13% 9%;
+    --primary-hover: 213 94% 68%;
+
+    /* Secondary */
+    --secondary: 220 13% 18%;
+    --secondary-foreground: 210 40% 98%;
+
+    /* Muted backgrounds */  
+    --muted: 220 13% 18%;
+    --muted-foreground: 220 9% 65%;
+
+    /* Accent */
+    --accent: 213 94% 78%;
+    --accent-foreground: 220 13% 9%;
+
+    /* Status colors (adjusted for dark mode) */
+    --success: 142 71% 55%;
+    --success-foreground: 220 13% 9%;
+    --warning: 38 92% 60%;
+    --warning-foreground: 220 13% 9%;
+    --destructive: 0 84% 70%;
+    --destructive-foreground: 220 13% 9%;
+
+    /* Form elements */
+    --border: 220 13% 18%; 
+    --input: 220 13% 18%;
+    --ring: 213 94% 78%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary-hover focus:ring-2 focus:ring-primary/20 transition-colors duration-200;
+  }
+  
+  .btn-success {
+    @apply bg-success text-success-foreground hover:bg-success/90 focus:ring-2 focus:ring-success/20;
+  }
+  
+  .btn-warning {
+    @apply bg-warning text-warning-foreground hover:bg-warning/90 focus:ring-2 focus:ring-warning/20;
+  }
+  
+  .btn-destructive {
+    @apply bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-2 focus:ring-destructive/20;
+  }
+
+  .card-shadow {
+    box-shadow: var(--shadow);
+  }
+  
+  .card-shadow-lg {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+}
