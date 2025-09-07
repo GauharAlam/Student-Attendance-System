@@ -38,17 +38,19 @@ const Register: React.FC = () => {
         }
         setIsLoading(true);
         try {
-            await registerUser({ name, email, password }); // include role
+            // ✅ **FIX: Added the 'role' to the registration data payload**
+            await registerUser({ name, email, password, role });
             toast({
                 title: "Registration Pending",
                 description: "An OTP has been sent to your email. Please verify to continue.",
             });
             setIsOtpSent(true);
         } catch (err: any) {
-            setError(err.message || 'Registration failed');
+            const errorMessage = err.response?.data?.error || err.message || 'Registration failed';
+            setError(errorMessage);
             toast({
                 title: "Registration Failed",
-                description: err.message || "Something went wrong",
+                description: errorMessage,
                 variant: "destructive",
             });
         } finally {
@@ -74,15 +76,18 @@ const Register: React.FC = () => {
             // Auto-login after OTP verification
             const success = await login(email, password);
             if (success) {
+                // Navigate based on the role selected during registration
                 navigate(role === 'teacher' ? '/teacher-dashboard' : '/student-check');
             } else {
+                // If auto-login fails, redirect to the login page
                 navigate('/login');
             }
         } catch (err: any) {
-            setError(err.message || 'OTP verification failed');
+            const errorMessage = err.response?.data?.error || err.message || 'OTP verification failed';
+            setError(errorMessage);
             toast({
                 title: "Verification Failed",
-                description: err.message || "Something went wrong",
+                description: errorMessage,
                 variant: "destructive",
             });
         } finally {
