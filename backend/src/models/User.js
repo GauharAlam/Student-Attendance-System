@@ -40,6 +40,12 @@ const userSchema = new mongoose.Schema(
       enum: ["student", "teacher", "admin"],
       default: "student",
     },
+    isApproved: { // 👈 New field
+      type: Boolean,
+      default: function() {
+        return this.role !== 'student';
+      },
+    },
   },
   { timestamps: true } // 👈 createdAt, updatedAt automatically added
 );

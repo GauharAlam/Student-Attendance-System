@@ -26,16 +26,16 @@ const Login: React.FC = () => {
       return;
     }
 
-    const success = await login(email, password);
+    const loggedInUser = await login(email, password);
     
-    if (success) {
+    if (loggedInUser) {
       toast({
         title: "Login Successful",
         description: "Welcome to the Student Attendance System",
       });
       
-      // Redirect based on user role
-      if (email === 'teacher@school.edu') {
+      // Redirect based on the user's actual role
+      if (loggedInUser.role === 'teacher') {
         navigate('/teacher-dashboard');
       } else {
         navigate('/student-check');
@@ -114,7 +114,6 @@ const Login: React.FC = () => {
               </Button>
             </form>
 
-            {/* 🔹 Register condition here */}
             <div className="mt-4 text-center">
               <p className="text-sm text-muted-foreground">
                 Don’t have an account?{" "}

@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { registerUser, verifyOtp } from '@/service/authService';
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const Register: React.FC = () => {
     const [name, setName] = useState('');
@@ -20,6 +21,7 @@ const Register: React.FC = () => {
     const { login, isLoading, setIsLoading } = useAuth();
     const navigate = useNavigate();
     const { toast } = useToast();
+    const [role, setRole] = useState<'student' | 'teacher'>('student');
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -31,7 +33,7 @@ const Register: React.FC = () => {
         }
         setIsLoading(true);
         try {
-            await registerUser({ name, email, password });
+            await registerUser({ name, email, password, role });
             toast({
                 title: "Registration Pending",
                 description: "An OTP has been sent to your email. Please verify to continue.",
@@ -63,7 +65,6 @@ const Register: React.FC = () => {
                 title: "Verification Successful",
                 description: "You can now log in with your credentials",
             });
-            // Automatically log the user in after successful verification
             const success = await login(email, password);
             if (success) {
                 navigate(email === 'teacher@school.edu' ? '/teacher-dashboard' : '/student-check');
@@ -107,6 +108,13 @@ const Register: React.FC = () => {
                         <form onSubmit={isOtpSent ? handleVerifyOtp : handleRegister} className="space-y-4">
                             {!isOtpSent && (
                                 <>
+                                    <div className="space-y-2">
+                                        <Label>I am a:</Label>
+                                        <ToggleGroup type="single" value={role} onValueChange={(value) => { if (value) setRole(value as 'student' | 'teacher')}}>
+                                            <ToggleGroupItem value="student">Student</ToggleGroupItem>
+                                            <ToggleGroupItem value="teacher">Teacher</ToggleGroupItem>
+                                        </ToggleGroup>
+                                    </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="name">Name</Label>
                                         <Input
@@ -158,7 +166,6 @@ const Register: React.FC = () => {
                                     />
                                 </div>
                             )}
-
 
                             {error && (
                                 <Alert variant="destructive">
