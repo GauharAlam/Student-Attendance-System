@@ -1,58 +1,77 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { User } from '../types';
-import { mockUsers } from '../data/mockData';
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { loginUser as apiLogin } from '@/service/authService';
+import axiosInstance from '@/config/axiosInstance';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>; // 👈 Add this
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Simple mock authentication
-    const foundUser = mockUsers.find(u => u.email === email);
-    
-    if (foundUser && password === 'password') {
-      setUser(foundUser);
-      setIsLoading(false);
-      return true;
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // You might want to add a call here to verify the token and get user info
+      // For now, we'll assume the token is valid if it exists
+      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
-    
-    setIsLoading(false);
-    return false;
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const { success, token, user: userData } = await apiLogin({ email, password });
+      if (success && token && userData) {
+        localStorage.setItem('token', token);
+        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        setUser(userData as User);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Login failed:', error);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = () => {
+    localStorage.removeItem('token');
+    delete axiosInstance.defaults.headers.common['Authorization'];
     setUser(null);
   };
 
-  return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = {
+    user,
+    login,
+    logout,
+    isLoading,
+    setIsLoading, // 👈 Export this
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

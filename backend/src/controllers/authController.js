@@ -18,10 +18,9 @@ exports.register = async (req, res) => {
     const user = new User({ name, email, password: hashedPassword, verified: false });
     await user.save();
 
-    res.status(201).json({
-      success: true,
-      message: 'User registered successfully. Please verify your account via OTP.',
-    });
+    // Generate and send OTP
+    await exports.generateOTP({ body: { email } }, res);
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -63,8 +62,8 @@ exports.verifyOTP = async (req, res) => {
     }
 
     user.verified = true;
-    user.otp = null;
-    user.otpExpires = null;
+    user.otp = undefined;
+    user.otpExpires = undefined;
     await user.save();
 
     res.status(200).json({ success: true, message: 'Account verified successfully' });
@@ -77,7 +76,7 @@ exports.verifyOTP = async (req, res) => {
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+password');
     if (!user) return res.status(400).json({ error: 'User not found' });
 
     // 👇 Ensure user is verified
@@ -89,7 +88,7 @@ exports.login = async (req, res) => {
     if (!match) return res.status(400).json({ error: 'Invalid credentials' });
 
     const token = jwt.sign(
-      { id: user._id, email: user.email },
+      { id: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '1h' }
     );
@@ -98,7 +97,7 @@ exports.login = async (req, res) => {
       success: true,
       message: "Login successful",
       token,
-      user: { id: user._id, name: user.name, email: user.email },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

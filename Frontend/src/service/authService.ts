@@ -6,6 +6,11 @@ interface userData {
   password: string;
 }
 
+interface otpData {
+    email: string;
+    otp: string;
+}
+
 interface ApiResponse {
   success: boolean;
   message: string;
@@ -27,12 +32,22 @@ export const registerUser = async (data: userData): Promise<ApiResponse> => {
   }
 };
 
-export const loginUser = async (data: userData): Promise<ApiResponse> => {
-  try {
-    const response = await axiosInstance.post<ApiResponse>("/auth/login", data);
-    return response.data;
-  } catch (error: any) {
-    // normalize error
-    throw new Error(error.response?.data?.message || "login failed");
-  }
-};
+export const loginUser = async (data: Omit<userData, 'name'>): Promise<ApiResponse> => {
+    try {
+      const response = await axiosInstance.post<ApiResponse>("/auth/login", data);
+      return response.data;
+    } catch (error: any) {
+      // normalize error
+      throw new Error(error.response?.data?.message || "login failed");
+    }
+  };
+  
+  export const verifyOtp = async (data: otpData): Promise<ApiResponse> => {
+    try {
+      const response = await axiosInstance.post<ApiResponse>("/auth/verify-otp", data);
+      return response.data;
+    } catch (error: any) {
+      // normalize error
+      throw new Error(error.response?.data?.message || "OTP verification failed");
+    }
+  };
