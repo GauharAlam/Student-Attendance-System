@@ -16,7 +16,7 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // create user as unverified
-    const user = new User({ name, email, password: hashedPassword, verified: false, role });
+    const user = new User({ name, email, password: hashedPassword, verified: false, role, isApproved: role === 'student' ? false : true });
     await user.save();
 
     // Generate and send OTP
