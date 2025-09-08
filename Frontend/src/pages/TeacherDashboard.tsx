@@ -73,12 +73,15 @@ const TeacherDashboard: React.FC = () => {
 
     const handleApproveStudent = async (studentId: string) => {
         try {
-            await approveStudent(studentId);
+            const { student: approvedStudent } = await approveStudent(studentId);
             toast({
                 title: "Student Approved",
                 description: "The student has been successfully approved.",
             });
-            fetchStudents(); // Refresh both lists
+
+            setUnapprovedStudents(prev => prev.filter(student => student._id !== studentId));
+            setApprovedStudents(prev => [...prev, approvedStudent]);
+
         } catch (error) {
             toast({
                 title: "Error",

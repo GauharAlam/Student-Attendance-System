@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const teacherController = require('../controllers/teacherController');
-const { authMiddleware, teacherMiddleware } = require('../middleware/authMiddleware');
+const { protect, isTeacher } = require('../middleware/authMiddleware');
 
 // Student Management Routes
-router.get('/approved-students', authMiddleware, teacherMiddleware, teacherController.getApprovedStudents);
-router.get('/unapproved-students', authMiddleware, teacherMiddleware, teacherController.getUnapprovedStudents);
-router.patch('/approve-student/:studentId', authMiddleware, teacherMiddleware, teacherController.approveStudent);
+router.get('/approved-students', protect, isTeacher, teacherController.getApprovedStudents);
+router.get('/unapproved-students', protect, isTeacher, teacherController.getUnapprovedStudents);
+router.patch('/approve-student/:studentId', protect, isTeacher, teacherController.approveStudent);
 
 // Attendance Routes
-router.post('/attendance', authMiddleware, teacherMiddleware, teacherController.saveAttendance);
-router.get('/attendance', authMiddleware, teacherMiddleware, teacherController.getAttendance);
+router.post('/attendance', protect, isTeacher, teacherController.saveAttendance);
+router.get('/attendance', protect, isTeacher, teacherController.getAttendance);
 
 module.exports = router;

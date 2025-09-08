@@ -1,7 +1,10 @@
+// backend/src/controllers/teacherController.js
+
 const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 
 const teacherController = {
+  // ... (getApprovedStudents and getUnapprovedStudents functions are unchanged)
   getApprovedStudents: async (req, res) => {
     try {
       const students = await User.find({ role: 'student', isApproved: true });
@@ -43,12 +46,16 @@ const teacherController = {
       student.isApproved = true;
       student.rollNo = uniqueRollNo;
       await student.save();
-      res.status(200).json({ success: true, message: 'Student approved successfully' });
+
+      // ✅ **CHANGE**: Send the updated student back to the frontend
+      res.status(200).json({ success: true, message: 'Student approved successfully', student });
+
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   },
 
+  // ... (saveAttendance and getAttendance functions are unchanged)
   saveAttendance: async (req, res) => {
     const { date, records } = req.body;
     try {
