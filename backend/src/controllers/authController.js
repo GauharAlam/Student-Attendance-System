@@ -15,6 +15,7 @@ exports.register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // ✅ FIX: Explicitly set the 'isApproved' status for clarity and reliability.
     // create user as unverified
     const user = new User({ name, email, password: hashedPassword, verified: false, role, isApproved: role === 'student' ? false : true });
     await user.save();

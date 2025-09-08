@@ -10,16 +10,28 @@ export interface AttendanceRecord {
   date: string;
   status: 'present' | 'absent';
 }
+// frontend/src/types/index.ts
+
 export interface User {
     _id: string;
     name: string;
     email: string;
-    rollNo?: string; // Make rollNo optional
     role: 'student' | 'teacher' | 'admin';
+    rollNo?: string;
     isApproved: boolean;
     verified: boolean;
-    createdAt: string;
-    updatedAt: string;
+}
+
+export interface LoginCredentials {
+    email: string;
+    password: string;
+}
+
+export interface LoginResponse {
+    token: string;
+    user: User;
+    success: boolean;
+    message: string;
 }
 export interface AttendanceData {
   [date: string]: {
