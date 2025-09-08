@@ -1,56 +1,66 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { loginUser } from '../service/authService';
-import { User, LoginCredentials } from '../types';
-import axiosInstance from '../config/axiosInstance';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'student' | 'teacher';
+  rollNo?: string;
+}
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
-  isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  setIsLoading: (loading: boolean) => void;
+  isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
+    const token = localStorage.getItem('token');
+    if (token) {
       try {
-        // The decoded token will have the same shape as the User interface
-        const decodedToken: User = jwtDecode(storedToken);
-        setUser(decodedToken);
-        setToken(storedToken);
+        const decoded: User = jwtDecode(token);
+        setUser({
+          id: decoded.id,
+          name: decoded.name,
+          email: decoded.email,
+          role: decoded.role,
+          rollNo: decoded.rollNo,
+        });
       } catch (error) {
-        console.error("Invalid token:", error);
+        console.error("Invalid token", error);
         localStorage.removeItem('token');
-        setToken(null);
-        setUser(null);
       }
     }
     setIsLoading(false);
   }, []);
 
-  const login = async (credentials: LoginCredentials) => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const response = await loginUser(credentials);
-      const { token, user: userData } = response;
-
+      const response = await loginUser(email, password);
+      const { token, user: userData } = response.data; // This line is now error-free
+      
       localStorage.setItem('token', token);
-      setToken(token);
-      setUser(userData);
-      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setUser({
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+        rollNo: userData.rollNo,
+      });
       return true;
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error('Login failed:', error);
       return false;
     } finally {
       setIsLoading(false);
@@ -58,22 +68,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
     setUser(null);
-    delete axiosInstance.defaults.headers.common['Authorization'];
+    localStorage.removeItem('token');
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading, setIsLoading }}>
-      {!isLoading && children}
+    <AuthContext.Provider value={{ user, login, logout, isLoading, setIsLoading }}>
+      {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
