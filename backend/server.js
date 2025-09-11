@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const authRoutes = require('./src/routes/authRoutes');
 const teacherRoutes = require('./src/routes/teacherRoutes'); // 👈 Import teacher routes
+const studentRoutes = require('./src/routes/studentRoutes');
 const cors = require('cors');
 const path = require('path');
 
@@ -16,6 +17,7 @@ app.use(cors());
 // Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/teacher', teacherRoutes); // 👈 Use teacher routes
+app.use('/api/student', studentRoutes); // 👈 Use student routes
 
 // Serve static frontend files
 app.use(express.static(path.resolve(__dirname, '../')));
