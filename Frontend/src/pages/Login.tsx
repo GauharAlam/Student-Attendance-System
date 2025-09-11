@@ -30,8 +30,9 @@ const Login: React.FC = () => {
         if (!success) {
             setError('Invalid email or password, or your account is not yet approved by a teacher.');
         }
+        console.log("sucesssMsg"+success);
     };
-
+    
     // If login is successful, AuthContext will trigger re-render and navigation
     React.useEffect(() => {
         if (user) {

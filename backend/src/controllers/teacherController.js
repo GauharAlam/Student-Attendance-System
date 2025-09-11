@@ -58,6 +58,7 @@ const teacherController = {
   // ... (saveAttendance and getAttendance functions are unchanged)
   saveAttendance: async (req, res) => {
     const { date, records } = req.body;
+    lo
     try {
       let attendance = await Attendance.findOne({ date });
       if (!attendance) {

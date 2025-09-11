@@ -6,6 +6,8 @@ export interface AttendanceRecord {
 }
 
 export const getStudentAttendance = async (): Promise<AttendanceRecord[]> => {
-  const { data } = await axiosInstance.get('/api/student/attendance');
+  const { data } = await axiosInstance.get('/student/attendance');
+  console.log(data+"Hello data");
+  
   return data;
 };

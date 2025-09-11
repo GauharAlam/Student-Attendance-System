@@ -19,6 +19,8 @@ const StudentCheck: React.FC = () => {
             try {
                 const data = await getStudentAttendance();
                 setAttendance(data);
+                console.log(data+"ny daaaaa");
+                
             } catch (err) {
                 setError('Failed to fetch attendance data.');
                 console.error(err);
@@ -34,6 +36,7 @@ const StudentCheck: React.FC = () => {
     const presentCount = attendance.filter(record => record.status === 'present').length;
     const absentCount = totalClasses - presentCount;
     const attendancePercentage = totalClasses > 0 ? ((presentCount / totalClasses) * 100).toFixed(1) : '0.0';
+// console.log(totalClasses,"fghghgg");
 
     return (
         <Layout title="Student Dashboard">
