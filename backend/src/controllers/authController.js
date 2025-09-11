@@ -86,9 +86,9 @@ exports.login = async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ error: 'Invalid credentials' });
 
-    // Add name and rollNo to the JWT payload
+    // ✅ FIX: Add 'isApproved' to the JWT payload
     const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role, name: user.name, rollNo: user.rollNo },
+      { id: user._id, email: user.email, role: user.role, name: user.name, rollNo: user.rollNo, isApproved: user.isApproved },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '1h' }
     );
@@ -97,7 +97,8 @@ exports.login = async (req, res) => {
       success: true,
       message: "Login successful",
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, rollNo: user.rollNo },
+      // ✅ FIX: Add 'isApproved' to the user object
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, rollNo: user.rollNo, isApproved: user.isApproved },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

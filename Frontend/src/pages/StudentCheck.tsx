@@ -1,132 +1,131 @@
-import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useAttendance } from '../contexts/AttendanceContext';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import { useAuth } from '../contexts/AuthContext';
+import { getStudentAttendance, AttendanceRecord } from '../service/studentService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { User, Calendar, CheckCircle, XCircle } from 'lucide-react';
 
 const StudentCheck: React.FC = () => {
-    const { user, isLoading } = useAuth(); // Destructure isLoading
-    const { attendanceData } = useAttendance();
+    const { user } = useAuth();
+    const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
-    // 1. Handle the loading state
-    if (isLoading) {
-        return (
-            <Layout title="Loading...">
-                <div className="flex justify-center items-center h-64">
-                    <Loader2 className="w-8 h-8 animate-spin" />
-                </div>
-            </Layout>
-        );
-    }
-
-    // 2. Handle the case where there is no user after loading
-    if (!user) {
-        return (
-            <Layout title="Student Attendance">
-                <div className="text-center">
-                    <p>Could not load student data. Please try logging in again.</p>
-                </div>
-            </Layout>
-        );
-    }
-
-    // Calculate attendance percentage using the logged-in user's ID
-    let totalDays = 0;
-    let presentCount = 0;
-
-    Object.values(attendanceData).forEach(dayAttendance => {
-        // This line is now safe because we've already checked for isLoading and user
-        if (dayAttendance[user.id]) {
-            totalDays++;
-            if (dayAttendance[user.id] === 'present') {
-                presentCount++;
+    useEffect(() => {
+        // ✅ CHANGE: Removed the approval check to fetch attendance for all students.
+        const fetchAttendance = async () => {
+            try {
+                const data = await getStudentAttendance();
+                setAttendance(data);
+            } catch (err) {
+                setError('Failed to fetch attendance data.');
+                console.error(err);
+            } finally {
+                setLoading(false);
             }
-        }
-    });
+        };
 
-    const attendancePercentage = totalDays > 0 ? (presentCount / totalDays) * 100 : 0;
+        fetchAttendance();
+    }, []); // useEffect will run once when the component mounts
+
+    const totalClasses = attendance.length;
+    const presentCount = attendance.filter(record => record.status === 'present').length;
+    const absentCount = totalClasses - presentCount;
+    const attendancePercentage = totalClasses > 0 ? ((presentCount / totalClasses) * 100).toFixed(1) : '0.0';
 
     return (
-        <Layout title="Your Attendance">
+        <Layout title="Student Dashboard">
             <div className="space-y-6">
                 <Card className="card-shadow">
                     <CardHeader>
-                        <CardTitle className="text-xl">Welcome, {user.name}!</CardTitle>
+                        <CardTitle className="flex items-center gap-2">
+                            <User className="w-6 h-6" />
+                            Student Information
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                            <div>
-                                <p className="text-sm text-muted-foreground">Roll No</p>
-                                <p className="text-lg font-bold">{user.rollNo || 'Not Assigned'}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-muted-foreground">Total Classes</p>
-                                <p className="text-lg font-bold">{totalDays}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-muted-foreground">Classes Attended</p>
-                                <p className="text-lg font-bold text-success">{presentCount}</p>
-                            </div>
-                        </div>
+                    <CardContent className="space-y-2">
+                        <p><strong>Name:</strong> {user?.name}</p>
+                        <p><strong>Email:</strong> {user?.email}</p>
+                        <p><strong>Roll No:</strong> {user?.rollNo || 'N/A (Pending Approval)'}</p>
                     </CardContent>
                 </Card>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="card-shadow">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Classes</CardTitle>
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{totalClasses}</div>
+                        </CardContent>
+                    </Card>
+                    <Card className="card-shadow">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Present</CardTitle>
+                            <CheckCircle className="h-4 w-4 text-success" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-success">{presentCount}</div>
+                        </CardContent>
+                    </Card>
+                    <Card className="card-shadow">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Absent</CardTitle>
+                            <XCircle className="h-4 w-4 text-destructive" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-destructive">{absentCount}</div>
+                        </CardContent>
+                    </Card>
+                </div>
 
                 <Card className="card-shadow">
                     <CardHeader>
-                        <CardTitle>Attendance Summary</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div>
-                            <div className="flex justify-between mb-1">
-                                <span className="text-base font-medium text-primary">Attendance</span>
-                                <span className="text-sm font-medium text-primary">{attendancePercentage.toFixed(1)}%</span>
-                            </div>
-                            <Progress value={attendancePercentage} className="w-full" />
+                        <div className="flex justify-between items-center">
+                            <CardTitle>Attendance History</CardTitle>
+                            <Badge variant="outline">
+                                Attendance: {attendancePercentage}%
+                            </Badge>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                            You were present for {presentCount} out of {totalDays} classes. Keep it up!
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Daily Status</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b">
-                                        <th className="text-left py-3 px-4 font-medium">Date</th>
-                                        <th className="text-center py-3 px-4 font-medium">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {Object.entries(attendanceData)
-                                        .map(([date, dayAttendance]) => {
-                                            const status = dayAttendance[user.id];
-                                            if (!status) return null;
-
-                                            return (
-                                                <tr key={date} className="border-b hover:bg-muted/50">
-                                                    <td className="py-3 px-4">{date}</td>
-                                                    <td className={cn(
-                                                        "py-3 px-4 text-center font-medium",
-                                                        status === 'present' ? 'text-success' : 'text-destructive'
-                                                    )}>
-                                                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })
-                                        .reverse()}
-                                </tbody>
-                            </table>
-                        </div>
+                         {loading ? (
+                            <p>Loading attendance...</p>
+                        ) : error ? (
+                            <p className="text-destructive">{error}</p>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead className="text-center">Status</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {attendance.length > 0 ? (
+                                        attendance.map((record) => (
+                                            <TableRow key={record.date}>
+                                                <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
+                                                <TableCell className="text-center">
+                                                    <Badge variant={record.status === 'present' ? 'success' : 'destructive'}>
+                                                        {record.status}
+                                                    </Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={2} className="text-center">
+                                                No attendance recorded yet.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        )}
                     </CardContent>
                 </Card>
             </div>
