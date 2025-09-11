@@ -2,6 +2,7 @@
 
 const User = require('../models/User');
 const Attendance = require('../models/Attendance');
+const mongoose = require('mongoose');
 
 const teacherController = {
   // ... (getApprovedStudents and getUnapprovedStudents functions are unchanged)
@@ -55,35 +56,32 @@ const teacherController = {
     }
   },
 
-  // ... (saveAttendance and getAttendance functions are unchanged)
-  saveAttendance: async (req, res) => {
+  // Save Attendance
+saveAttendance : async (req, res) => {
+  try {
     const { date, records } = req.body;
-    lo
-    try {
-      let attendance = await Attendance.findOne({ date });
-      if (!attendance) {
-        attendance = new Attendance({ date, records: [] });
-      }
-      const recordsArray = Object.entries(records).map(([studentId, status]) => ({
-        studentId,
-        status,
-      }));
-      recordsArray.forEach(newRecord => {
-        const existingRecordIndex = attendance.records.findIndex(
-          dbRecord => dbRecord.studentId.toString() === newRecord.studentId
-        );
-        if (existingRecordIndex > -1) {
-          attendance.records[existingRecordIndex].status = newRecord.status;
-        } else {
-          attendance.records.push(newRecord);
-        }
-      });
-      await attendance.save();
-      res.status(200).json({ success: true, message: 'Attendance saved successfully' });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+
+    // Ensure records is provided
+    if (!records || !Array.isArray(records) || records.length === 0) {
+      return res.status(400).json({ error: "Attendance records are required" });
     }
-  },
+
+    const attendance = new Attendance({
+      date,
+      records, // [{ studentId, status }]
+    });
+
+    await attendance.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Attendance saved successfully",
+      data: attendance,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+},
 
   getAttendance: async (req, res) => {
     try {

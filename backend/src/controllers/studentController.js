@@ -5,7 +5,6 @@ exports.getStudentAttendance = async (req, res) => {
   try {
     // The student's ID is available from the protect middleware (req.user.id)
     const studentId = req.user.id;
-
     // Find all attendance documents that include a record for this student
     const attendanceRecords = await Attendance.find({ 'records.studentId': studentId })
       .sort({ date: -1 }); // Sort by date descending

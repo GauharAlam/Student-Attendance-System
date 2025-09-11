@@ -9,7 +9,7 @@ router.get('/unapproved-students', protect, isTeacher, teacherController.getUnap
 router.patch('/approve-student/:studentId', protect, isTeacher, teacherController.approveStudent);
 
 // Attendance Routes
-router.post('/attendance', protect, isTeacher, teacherController.saveAttendance);
+router.post('/attendance',  protect, isTeacher, teacherController.saveAttendance);
 router.get('/attendance', protect, isTeacher, teacherController.getAttendance);
 
 module.exports = router;
