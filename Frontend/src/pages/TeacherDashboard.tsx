@@ -59,17 +59,47 @@ const TeacherDashboard: React.FC = () => {
         setAttendance(prev => ({ ...prev, [studentId]: isPresent }));
     };
 
-    const handleSaveAttendance = () => {
-        const attendanceRecord: { [studentId: string]: 'present' | 'absent' } = {};
-        Object.entries(attendance).forEach(([studentId, isPresent]) => {
-            attendanceRecord[studentId] = isPresent ? 'present' : 'absent';
-        });
-        saveAttendance(dateString, attendanceRecord);
-        toast({
-            title: "Attendance Saved",
-            description: `Attendance for ${format(selectedDate, 'PPP')} has been saved successfully.`,
-        });
-    };
+   const handleSaveAttendance = async () => {
+  // Convert attendance object -> array of records
+  const recordsArray = Object.entries(attendance).map(([studentId, isPresent]) => ({
+    studentId,
+    status: isPresent ? "present" : "absent",
+  }));
+
+  try {
+    const res = await fetch("http://localhost:5000/api/teacher/attendance", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        date: dateString,
+        records: recordsArray,
+      }),
+    });
+
+    const data = await res.json();
+     console.log(data,"data")
+    if (res.ok) {
+      toast({
+        title: "Attendance Saved ✅",
+        description: `Attendance for ${format(selectedDate, "PPP")} has been saved successfully.`,
+      });
+    } else {
+      toast({
+        title: "Error ❌",
+        description: data.error || "Failed to save attendance",
+      });
+    }
+  } catch (err) {
+    toast({
+      title: "Error ❌",
+      description: "Something went wrong while saving attendance",
+    });
+    console.error("❌ API error:", err);
+  }
+};
+
 
     const handleApproveStudent = async (studentId: string) => {
         try {
