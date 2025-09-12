@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { saveAs } from 'file-saver';
 import Layout from '../components/Layout';
-import { useAttendance } from '../contexts/AttendanceContext';
+import { useAttendance } from '../contexts/AttendanceContext'; // Use the context hook
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -11,6 +11,7 @@ import { CalendarIcon, Download, Save, Users, UserCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+// ✅ FIX: Remove the direct service import for saveAttendance
 import { getUnapprovedStudents, approveStudent, getApprovedStudents } from '../service/teacherService';
 import { User } from '../types';
 import { Label } from '@/components/ui/label';
@@ -20,7 +21,8 @@ const TeacherDashboard: React.FC = () => {
     const [attendance, setAttendance] = useState<{ [studentId: string]: boolean }>({});
     const [unapprovedStudents, setUnapprovedStudents] = useState<User[]>([]);
     const [approvedStudents, setApprovedStudents] = useState<User[]>([]);
-    const { saveAttendance, attendanceData } = useAttendance();
+    // ✅ FIX: Get saveAttendance from the context
+    const { attendanceData, saveAttendance } = useAttendance();
     const { toast } = useToast();
     const dateString = format(selectedDate, 'yyyy-MM-dd');
 
@@ -45,7 +47,7 @@ const TeacherDashboard: React.FC = () => {
     useEffect(() => {
         fetchStudents();
     }, []);
-
+    
     useEffect(() => {
         const existingAttendance = attendanceData[dateString] || {};
         const loadedAttendance: { [studentId: string]: boolean } = {};
@@ -59,47 +61,32 @@ const TeacherDashboard: React.FC = () => {
         setAttendance(prev => ({ ...prev, [studentId]: isPresent }));
     };
 
-   const handleSaveAttendance = async () => {
-  // Convert attendance object -> array of records
-  const recordsArray = Object.entries(attendance).map(([studentId, isPresent]) => ({
-    studentId,
-    status: isPresent ? "present" : "absent",
-  }));
+    // ✅ FIX: Update this function to use the context
+    const handleSaveAttendance = async () => {
+        // Convert the local boolean state to the 'present' | 'absent' format
+        const recordsToSave: { [studentId: string]: 'present' | 'absent' } = {};
+        Object.entries(attendance).forEach(([studentId, isPresent]) => {
+            recordsToSave[studentId] = isPresent ? "present" : "absent";
+        });
 
-  try {
-    const res = await fetch("http://localhost:5000/api/teacher/attendance", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        date: dateString,
-        records: recordsArray,
-      }),
-    });
+        try {
+            // Call the save function from the context
+            await saveAttendance(dateString, recordsToSave);
+            
+            toast({
+                title: "Attendance Saved ✅",
+                description: `Attendance for ${format(selectedDate, "PPP")} has been saved successfully.`,
+            });
 
-    const data = await res.json();
-     console.log(data,"data")
-    if (res.ok) {
-      toast({
-        title: "Attendance Saved ✅",
-        description: `Attendance for ${format(selectedDate, "PPP")} has been saved successfully.`,
-      });
-    } else {
-      toast({
-        title: "Error ❌",
-        description: data.error || "Failed to save attendance",
-      });
-    }
-  } catch (err) {
-    toast({
-      title: "Error ❌",
-      description: "Something went wrong while saving attendance",
-    });
-    console.error("❌ API error:", err);
-  }
-};
-
+        } catch (err: any) {
+            toast({
+                title: "Error ❌",
+                description: err.response?.data?.error || "Something went wrong while saving attendance",
+                variant: "destructive",
+            });
+            console.error("❌ API error:", err);
+        }
+    };
 
     const handleApproveStudent = async (studentId: string) => {
         try {
@@ -168,7 +155,7 @@ const TeacherDashboard: React.FC = () => {
             description: "Attendance report has been downloaded successfully.",
         });
     };
-
+    
     const presentCount = Object.values(attendance).filter(Boolean).length;
     const totalStudents = approvedStudents.length;
 

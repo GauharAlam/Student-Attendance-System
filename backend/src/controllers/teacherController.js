@@ -57,31 +57,48 @@ const teacherController = {
   },
 
   // Save Attendance
-saveAttendance : async (req, res) => {
-  try {
-    const { date, records } = req.body;
+  saveAttendance: async (req, res) => {
+    try {
+      const { date, records } = req.body;
 
-    // Ensure records is provided
-    if (!records || !Array.isArray(records) || records.length === 0) {
-      return res.status(400).json({ error: "Attendance records are required" });
+      if (!records || !Array.isArray(records) || records.length === 0) {
+        return res.status(400).json({ error: "Attendance records are required" });
+      }
+
+      let attendance = await Attendance.findOne({ date });
+
+      if (attendance) {
+        // Update existing records
+        records.forEach(record => {
+          const { studentId, status } = record;
+          const existingRecord = attendance.records.find(
+            r => r.studentId.toString() === studentId,
+          );
+          if (existingRecord) {
+            existingRecord.status = status;
+          } else {
+            attendance.records.push({ studentId, status });
+          }
+        });
+      } else {
+        // Create a new record
+        attendance = new Attendance({
+          date,
+          records,
+        });
+      }
+
+      await attendance.save();
+
+      res.status(201).json({
+        success: true,
+        message: "Attendance saved successfully",
+        data: attendance,
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
-
-    const attendance = new Attendance({
-      date,
-      records, // [{ studentId, status }]
-    });
-
-    await attendance.save();
-
-    res.status(201).json({
-      success: true,
-      message: "Attendance saved successfully",
-      data: attendance,
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-},
+  },
 
   getAttendance: async (req, res) => {
     try {

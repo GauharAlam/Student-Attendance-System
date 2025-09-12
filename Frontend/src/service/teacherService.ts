@@ -21,6 +21,8 @@ export const getAttendance = async (): Promise<any[]> => {
     return response.data;
 }
 
-export const saveAttendance = async (date: string, records: { [studentId: string]: 'present' | 'absent' }): Promise<void> => {
-    await axiosInstance.post('/teacher/attendance', { date, records });
+// FIX: Update this function to use axios and send the correct data structure
+export const saveAttendance = async (date: string, records: { studentId: string; status: 'present' | 'absent' }[]): Promise<any> => {
+    const response = await axiosInstance.post('/teacher/attendance', { date, records });
+    return response.data;
 }

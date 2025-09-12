@@ -20,6 +20,6 @@ const attendanceSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Ensure that a student's attendance is recorded only once per day
-attendanceSchema.index({ date: 1, 'records.studentId': 1 }, { unique: true });
+// attendanceSchema.index({ date: 1, 'records.studentId': 1 }, { unique: true }); // REMOVE THIS LINE
 
 module.exports = mongoose.model('Attendance', attendanceSchema);
