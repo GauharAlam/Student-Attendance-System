@@ -1,27 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { saveAs } from 'file-saver';
 import Layout from '../components/Layout';
-import { useAttendance } from '../contexts/AttendanceContext'; // Use the context hook
+import { useAttendance } from '../contexts/AttendanceContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Download, Save, Users, UserCheck } from 'lucide-react';
+import { CalendarIcon, Download, Save, Users, UserCheck, UserX, UserRound } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-// ✅ FIX: Remove the direct service import for saveAttendance
 import { getUnapprovedStudents, approveStudent, getApprovedStudents } from '../service/teacherService';
 import { User } from '../types';
 import { Label } from '@/components/ui/label';
 
 const TeacherDashboard: React.FC = () => {
+    // ... (Your existing state declarations and functions remain unchanged)
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [attendance, setAttendance] = useState<{ [studentId: string]: boolean }>({});
     const [unapprovedStudents, setUnapprovedStudents] = useState<User[]>([]);
     const [approvedStudents, setApprovedStudents] = useState<User[]>([]);
-    // ✅ FIX: Get saveAttendance from the context
     const { attendanceData, saveAttendance } = useAttendance();
     const { toast } = useToast();
     const dateString = format(selectedDate, 'yyyy-MM-dd');
@@ -47,7 +46,7 @@ const TeacherDashboard: React.FC = () => {
     useEffect(() => {
         fetchStudents();
     }, []);
-    
+
     useEffect(() => {
         const existingAttendance = attendanceData[dateString] || {};
         const loadedAttendance: { [studentId: string]: boolean } = {};
@@ -61,16 +60,13 @@ const TeacherDashboard: React.FC = () => {
         setAttendance(prev => ({ ...prev, [studentId]: isPresent }));
     };
 
-    // ✅ FIX: Update this function to use the context
     const handleSaveAttendance = async () => {
-        // Convert the local boolean state to the 'present' | 'absent' format
         const recordsToSave: { [studentId: string]: 'present' | 'absent' } = {};
         Object.entries(attendance).forEach(([studentId, isPresent]) => {
             recordsToSave[studentId] = isPresent ? "present" : "absent";
         });
 
         try {
-            // Call the save function from the context
             await saveAttendance(dateString, recordsToSave);
             
             toast({
@@ -159,55 +155,58 @@ const TeacherDashboard: React.FC = () => {
     const presentCount = Object.values(attendance).filter(Boolean).length;
     const totalStudents = approvedStudents.length;
 
+
     return (
         <Layout title="Teacher Dashboard">
-            <div className="space-y-6">
+            <div className="space-y-8">
+                {/* ====== Colorful Stat Cards ====== */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card className="card-shadow">
+                    <Card className="card-shadow bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <CardTitle className="text-sm font-medium text-blue-100">Total Students</CardTitle>
+                            <UserRound className="h-5 w-5 text-blue-200" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{totalStudents}</div>
+                            <div className="text-3xl font-bold">{totalStudents}</div>
                         </CardContent>
                     </Card>
-                    <Card className="card-shadow">
+                    <Card className="card-shadow bg-gradient-to-r from-green-500 to-teal-500 text-white">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Present Today</CardTitle>
-                            <div className="h-4 w-4 bg-success rounded-full" />
+                            <CardTitle className="text-sm font-medium text-green-100">Present Today</CardTitle>
+                            <UserCheck className="h-5 w-5 text-green-200" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-success">{presentCount}</div>
+                            <div className="text-3xl font-bold">{presentCount}</div>
                         </CardContent>
                     </Card>
-                    <Card className="card-shadow">
+                    <Card className="card-shadow bg-gradient-to-r from-red-500 to-orange-500 text-white">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Absent Today</CardTitle>
-                            <div className="h-4 w-4 bg-destructive rounded-full" />
+                            <CardTitle className="text-sm font-medium text-red-100">Absent Today</CardTitle>
+                            <UserX className="h-5 w-5 text-red-200" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-destructive">{totalStudents - presentCount}</div>
+                            <div className="text-3xl font-bold">{totalStudents - presentCount}</div>
                         </CardContent>
                     </Card>
                 </div>
 
+                {/* ====== Approve Students Card ====== */}
                 <Card className="card-shadow">
-                    <CardHeader><CardTitle>Approve Students</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-xl font-bold text-gray-700">Approve New Students</CardTitle></CardHeader>
                     <CardContent>
                         {unapprovedStudents.length > 0 ? (
                             <div className="overflow-x-auto">
                                 <table className="w-full">
-                                    <thead>
-                                        <tr className="border-b">
-                                            <th className="text-left py-3 px-4 font-medium">Student Name</th>
-                                            <th className="text-left py-3 px-4 font-medium">Email</th>
-                                            <th className="text-center py-3 px-4 font-medium">Action</th>
+                                    <thead className="bg-slate-100">
+                                        <tr>
+                                            <th className="text-left py-3 px-4 font-semibold text-slate-600 uppercase text-sm">Student Name</th>
+                                            <th className="text-left py-3 px-4 font-semibold text-slate-600 uppercase text-sm">Email</th>
+                                            <th className="text-center py-3 px-4 font-semibold text-slate-600 uppercase text-sm">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {unapprovedStudents.map((student) => (
-                                            <tr key={student._id} className="border-b hover:bg-muted/50">
+                                        {unapprovedStudents.map((student, index) => (
+                                            <tr key={student._id} className={cn("border-b transition-colors", index % 2 === 0 ? "bg-white" : "bg-slate-50", "hover:bg-violet-50")}>
                                                 <td className="py-3 px-4">{student.name}</td>
                                                 <td className="py-3 px-4">{student.email}</td>
                                                 <td className="py-3 px-4 text-center">
@@ -226,25 +225,26 @@ const TeacherDashboard: React.FC = () => {
                                 </table>
                             </div>
                         ) : (
-                            <p className="text-muted-foreground">No students are currently pending approval.</p>
+                            <p className="text-center py-4 text-gray-500">No students are currently pending approval.</p>
                         )}
                     </CardContent>
                 </Card>
 
+                {/* ====== Mark Attendance Card ====== */}
                 <Card className="card-shadow">
                     <CardHeader>
-                        <CardTitle>Mark Attendance & Reports</CardTitle>
+                        <CardTitle className="text-xl font-bold text-gray-700">Attendance Controls</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                             <div className="space-y-2">
-                                <Label>Select Date</Label>
+                                <Label className="font-semibold text-gray-600">Select Date</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
                                             variant="outline"
                                             className={cn(
-                                                "w-[240px] justify-start text-left font-normal",
+                                                "w-[240px] justify-start text-left font-normal bg-white",
                                                 !selectedDate && "text-muted-foreground"
                                             )}
                                         >
@@ -258,17 +258,16 @@ const TeacherDashboard: React.FC = () => {
                                             selected={selectedDate}
                                             onSelect={(date) => date && setSelectedDate(date)}
                                             initialFocus
-                                            className="pointer-events-auto"
                                         />
                                     </PopoverContent>
                                 </Popover>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 pt-2 sm:pt-8">
                                 <Button onClick={handleSaveAttendance} className="btn-primary">
                                     <Save className="w-4 h-4 mr-2" />
                                     Save Attendance
                                 </Button>
-                                <Button onClick={generateReport} variant="outline">
+                                <Button onClick={generateReport} variant="outline" className="bg-white">
                                     <Download className="w-4 h-4 mr-2" />
                                     Download Report
                                 </Button>
@@ -277,24 +276,25 @@ const TeacherDashboard: React.FC = () => {
                     </CardContent>
                 </Card>
                 
+                {/* ====== Attendance Sheet Card ====== */}
                 <Card className="card-shadow">
-                    <CardHeader><CardTitle>Attendance Sheet - {format(selectedDate, 'PPP')}</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-xl font-bold text-gray-700">Attendance Sheet - <span className="text-indigo-600">{format(selectedDate, 'PPP')}</span></CardTitle></CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
                             <table className="w-full">
-                                <thead>
-                                    <tr className="border-b">
-                                        <th className="text-left py-3 px-4 font-medium">Roll No</th>
-                                        <th className="text-left py-3 px-4 font-medium">Student Name</th>
-                                        <th className="text-center py-3 px-4 font-medium">Present</th>
-                                        <th className="text-center py-3 px-4 font-medium">Status</th>
+                                <thead className="bg-slate-100">
+                                    <tr>
+                                        <th className="text-left py-3 px-4 font-semibold text-slate-600 uppercase text-sm">Roll No</th>
+                                        <th className="text-left py-3 px-4 font-semibold text-slate-600 uppercase text-sm">Student Name</th>
+                                        <th className="text-center py-3 px-4 font-semibold text-slate-600 uppercase text-sm">Present</th>
+                                        <th className="text-center py-3 px-4 font-semibold text-slate-600 uppercase text-sm">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {approvedStudents.map((student) => {
+                                    {approvedStudents.map((student, index) => {
                                         const isPresent = attendance[student._id] || false;
                                         return (
-                                            <tr key={student._id} className="border-b hover:bg-muted/50">
+                                            <tr key={student._id} className={cn("border-b transition-colors", index % 2 === 0 ? "bg-white" : "bg-slate-50", "hover:bg-violet-50")}>
                                                 <td className="py-3 px-4 font-medium">{student.rollNo || 'N/A'}</td>
                                                 <td className="py-3 px-4">{student.name}</td>
                                                 <td className="py-3 px-4 text-center">
@@ -304,7 +304,7 @@ const TeacherDashboard: React.FC = () => {
                                                     />
                                                 </td>
                                                 <td className="py-3 px-4 text-center">
-                                                    <span className={cn("px-2 py-1 rounded-full text-xs font-medium", isPresent ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive")}>
+                                                    <span className={cn("px-3 py-1 rounded-full text-xs font-semibold", isPresent ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
                                                         {isPresent ? 'Present' : 'Absent'}
                                                     </span>
                                                 </td>
