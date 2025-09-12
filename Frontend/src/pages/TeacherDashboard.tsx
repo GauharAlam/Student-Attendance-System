@@ -16,7 +16,7 @@ import { User } from '../types';
 import { Label } from '@/components/ui/label';
 
 const TeacherDashboard: React.FC = () => {
-    // ... (Your existing state declarations and functions remain unchanged)
+    // States & context
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [attendance, setAttendance] = useState<{ [studentId: string]: boolean }>({});
     const [unapprovedStudents, setUnapprovedStudents] = useState<User[]>([]);
@@ -25,6 +25,7 @@ const TeacherDashboard: React.FC = () => {
     const { toast } = useToast();
     const dateString = format(selectedDate, 'yyyy-MM-dd');
 
+    // Fetch students
     const fetchStudents = async () => {
         try {
             const [unapproved, approved] = await Promise.all([
@@ -36,7 +37,7 @@ const TeacherDashboard: React.FC = () => {
         } catch (error) {
             console.error('Failed to fetch students:', error);
             toast({
-                title: "Error",
+                title: "Error ❌",
                 description: "Failed to fetch student lists.",
                 variant: "destructive",
             });
@@ -56,6 +57,7 @@ const TeacherDashboard: React.FC = () => {
         setAttendance(loadedAttendance);
     }, [selectedDate, attendanceData, dateString, approvedStudents]);
 
+    // Attendance handlers
     const handleAttendanceChange = (studentId: string, isPresent: boolean) => {
         setAttendance(prev => ({ ...prev, [studentId]: isPresent }));
     };
@@ -68,19 +70,16 @@ const TeacherDashboard: React.FC = () => {
 
         try {
             await saveAttendance(dateString, recordsToSave);
-            
             toast({
-                title: "Attendance Saved ✅",
+                title: "✅ Attendance Saved",
                 description: `Attendance for ${format(selectedDate, "PPP")} has been saved successfully.`,
             });
-
         } catch (err: any) {
             toast({
                 title: "Error ❌",
                 description: err.response?.data?.error || "Something went wrong while saving attendance",
                 variant: "destructive",
             });
-            console.error("❌ API error:", err);
         }
     };
 
@@ -88,22 +87,21 @@ const TeacherDashboard: React.FC = () => {
         try {
             const { student: approvedStudent } = await approveStudent(studentId);
             toast({
-                title: "Student Approved",
+                title: "🎉 Student Approved",
                 description: "The student has been successfully approved.",
             });
-
             setUnapprovedStudents(prev => prev.filter(student => student._id !== studentId));
             setApprovedStudents(prev => [...prev, approvedStudent]);
-
-        } catch (error) {
+        } catch {
             toast({
-                title: "Error",
+                title: "Error ❌",
                 description: "Failed to approve the student.",
                 variant: "destructive",
             });
         }
     };
 
+    // CSV Report
     const generateReport = () => {
         const reportData = approvedStudents.map(student => {
             let totalDays = 0;
@@ -145,75 +143,78 @@ const TeacherDashboard: React.FC = () => {
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         saveAs(blob, `attendance-report-${format(new Date(), 'yyyy-MM-dd')}.csv`);
-
         toast({
-            title: "Report Downloaded",
+            title: "📥 Report Downloaded",
             description: "Attendance report has been downloaded successfully.",
         });
     };
-    
+
     const presentCount = Object.values(attendance).filter(Boolean).length;
     const totalStudents = approvedStudents.length;
 
-
     return (
         <Layout title="Teacher Dashboard">
-            <div className="space-y-8">
-                {/* ====== Colorful Stat Cards ====== */}
+            <div className="space-y-10">
+
+                {/* ====== Stats Section with Modern Gradient Cards ====== */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card className="card-shadow bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <Card className="card-shadow bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 text-white hover:scale-105 transition-transform duration-300">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium text-blue-100">Total Students</CardTitle>
-                            <UserRound className="h-5 w-5 text-blue-200" />
+                            <UserRound className="h-6 w-6 text-blue-200" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold">{totalStudents}</div>
+                            <div className="text-4xl font-bold">{totalStudents}</div>
                         </CardContent>
                     </Card>
-                    <Card className="card-shadow bg-gradient-to-r from-green-500 to-teal-500 text-white">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+
+                    <Card className="card-shadow bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600 text-white hover:scale-105 transition-transform duration-300">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium text-green-100">Present Today</CardTitle>
-                            <UserCheck className="h-5 w-5 text-green-200" />
+                            <UserCheck className="h-6 w-6 text-green-200" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold">{presentCount}</div>
+                            <div className="text-4xl font-bold">{presentCount}</div>
                         </CardContent>
                     </Card>
-                    <Card className="card-shadow bg-gradient-to-r from-red-500 to-orange-500 text-white">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+
+                    <Card className="card-shadow bg-gradient-to-br from-red-400 via-pink-500 to-orange-500 text-white hover:scale-105 transition-transform duration-300">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium text-red-100">Absent Today</CardTitle>
-                            <UserX className="h-5 w-5 text-red-200" />
+                            <UserX className="h-6 w-6 text-red-200" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold">{totalStudents - presentCount}</div>
+                            <div className="text-4xl font-bold">{totalStudents - presentCount}</div>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* ====== Approve Students Card ====== */}
-                <Card className="card-shadow">
-                    <CardHeader><CardTitle className="text-xl font-bold text-gray-700">Approve New Students</CardTitle></CardHeader>
+                {/* ====== Approve Students ====== */}
+                <Card className="card-shadow hover:shadow-xl transition duration-300">
+                    <CardHeader>
+                        <CardTitle className="text-xl font-bold text-indigo-700">Approve New Students</CardTitle>
+                    </CardHeader>
                     <CardContent>
                         {unapprovedStudents.length > 0 ? (
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead className="bg-slate-100">
+                            <div className="overflow-x-auto rounded-lg">
+                                <table className="w-full border border-slate-200 rounded-lg overflow-hidden">
+                                    <thead className="bg-gradient-to-r from-slate-200 to-slate-100">
                                         <tr>
-                                            <th className="text-left py-3 px-4 font-semibold text-slate-600 uppercase text-sm">Student Name</th>
-                                            <th className="text-left py-3 px-4 font-semibold text-slate-600 uppercase text-sm">Email</th>
-                                            <th className="text-center py-3 px-4 font-semibold text-slate-600 uppercase text-sm">Action</th>
+                                            <th className="py-3 px-4 text-left font-semibold text-slate-700 uppercase text-sm">Student Name</th>
+                                            <th className="py-3 px-4 text-left font-semibold text-slate-700 uppercase text-sm">Email</th>
+                                            <th className="py-3 px-4 text-center font-semibold text-slate-700 uppercase text-sm">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {unapprovedStudents.map((student, index) => (
-                                            <tr key={student._id} className={cn("border-b transition-colors", index % 2 === 0 ? "bg-white" : "bg-slate-50", "hover:bg-violet-50")}>
+                                        {unapprovedStudents.map((student, i) => (
+                                            <tr key={student._id} className={cn("transition-colors", i % 2 === 0 ? "bg-white" : "bg-slate-50", "hover:bg-indigo-50")}>
                                                 <td className="py-3 px-4">{student.name}</td>
                                                 <td className="py-3 px-4">{student.email}</td>
                                                 <td className="py-3 px-4 text-center">
                                                     <Button
                                                         onClick={() => handleApproveStudent(student._id)}
                                                         size="sm"
-                                                        className="btn-primary"
+                                                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
                                                     >
                                                         <UserCheck className="w-4 h-4 mr-2" />
                                                         Approve
@@ -225,34 +226,31 @@ const TeacherDashboard: React.FC = () => {
                                 </table>
                             </div>
                         ) : (
-                            <p className="text-center py-4 text-gray-500">No students are currently pending approval.</p>
+                            <p className="text-center py-6 text-gray-500">No students are currently pending approval 🎉</p>
                         )}
                     </CardContent>
                 </Card>
 
-                {/* ====== Mark Attendance Card ====== */}
-                <Card className="card-shadow">
+                {/* ====== Attendance Controls ====== */}
+                <Card className="card-shadow hover:shadow-xl transition duration-300">
                     <CardHeader>
-                        <CardTitle className="text-xl font-bold text-gray-700">Attendance Controls</CardTitle>
+                        <CardTitle className="text-xl font-bold text-indigo-700">Attendance Controls</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                    <CardContent className="space-y-6">
+                        <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
                             <div className="space-y-2">
-                                <Label className="font-semibold text-gray-600">Select Date</Label>
+                                <Label className="font-semibold text-gray-700">Select Date</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
                                             variant="outline"
-                                            className={cn(
-                                                "w-[240px] justify-start text-left font-normal bg-white",
-                                                !selectedDate && "text-muted-foreground"
-                                            )}
+                                            className="w-[240px] justify-start text-left font-medium bg-white hover:bg-slate-100 border"
                                         >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            <CalendarIcon className="mr-2 h-4 w-4 text-indigo-500" />
                                             {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
+                                    <PopoverContent className="w-auto p-0 shadow-lg" align="start">
                                         <Calendar
                                             mode="single"
                                             selected={selectedDate}
@@ -262,39 +260,42 @@ const TeacherDashboard: React.FC = () => {
                                     </PopoverContent>
                                 </Popover>
                             </div>
-                            <div className="flex gap-2 pt-2 sm:pt-8">
-                                <Button onClick={handleSaveAttendance} className="btn-primary">
-                                    <Save className="w-4 h-4 mr-2" />
-                                    Save Attendance
+
+                            <div className="flex gap-3 pt-2 sm:pt-7">
+                                <Button onClick={handleSaveAttendance} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                    <Save className="w-4 h-4 mr-2" /> Save Attendance
                                 </Button>
-                                <Button onClick={generateReport} variant="outline" className="bg-white">
-                                    <Download className="w-4 h-4 mr-2" />
-                                    Download Report
+                                <Button onClick={generateReport} variant="outline" className="bg-white border hover:bg-slate-100">
+                                    <Download className="w-4 h-4 mr-2" /> Download Report
                                 </Button>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
-                
-                {/* ====== Attendance Sheet Card ====== */}
-                <Card className="card-shadow">
-                    <CardHeader><CardTitle className="text-xl font-bold text-gray-700">Attendance Sheet - <span className="text-indigo-600">{format(selectedDate, 'PPP')}</span></CardTitle></CardHeader>
+
+                {/* ====== Attendance Sheet ====== */}
+                <Card className="card-shadow hover:shadow-xl transition duration-300">
+                    <CardHeader>
+                        <CardTitle className="text-xl font-bold text-indigo-700">
+                            Attendance Sheet - <span className="text-indigo-500">{format(selectedDate, 'PPP')}</span>
+                        </CardTitle>
+                    </CardHeader>
                     <CardContent>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-slate-100">
+                        <div className="overflow-x-auto rounded-lg">
+                            <table className="w-full border border-slate-200 rounded-lg overflow-hidden">
+                                <thead className="bg-gradient-to-r from-slate-200 to-slate-100">
                                     <tr>
-                                        <th className="text-left py-3 px-4 font-semibold text-slate-600 uppercase text-sm">Roll No</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-slate-600 uppercase text-sm">Student Name</th>
-                                        <th className="text-center py-3 px-4 font-semibold text-slate-600 uppercase text-sm">Present</th>
-                                        <th className="text-center py-3 px-4 font-semibold text-slate-600 uppercase text-sm">Status</th>
+                                        <th className="py-3 px-4 text-left font-semibold text-slate-700 uppercase text-sm">Roll No</th>
+                                        <th className="py-3 px-4 text-left font-semibold text-slate-700 uppercase text-sm">Student Name</th>
+                                        <th className="py-3 px-4 text-center font-semibold text-slate-700 uppercase text-sm">Present</th>
+                                        <th className="py-3 px-4 text-center font-semibold text-slate-700 uppercase text-sm">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {approvedStudents.map((student, index) => {
+                                    {approvedStudents.map((student, i) => {
                                         const isPresent = attendance[student._id] || false;
                                         return (
-                                            <tr key={student._id} className={cn("border-b transition-colors", index % 2 === 0 ? "bg-white" : "bg-slate-50", "hover:bg-violet-50")}>
+                                            <tr key={student._id} className={cn("transition-colors", i % 2 === 0 ? "bg-white" : "bg-slate-50", "hover:bg-indigo-50")}>
                                                 <td className="py-3 px-4 font-medium">{student.rollNo || 'N/A'}</td>
                                                 <td className="py-3 px-4">{student.name}</td>
                                                 <td className="py-3 px-4 text-center">
