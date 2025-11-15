@@ -21,10 +21,10 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
     rollNo: {
-      // ✅ This section is now correct.
-      // There is NO 'unique: true'.
       type: String,
       default: null,
+      unique: true, // <-- Add this
+      sparse: true,  // <-- Add this. This is the fix.
     },
     otp: {
       type: String,

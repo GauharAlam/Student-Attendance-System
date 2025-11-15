@@ -1,12 +1,12 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const sendEmail = require("../utils/sendEmail");
+// const sendEmail = require("../utils/sendEmail"); // No longer needed for this controller
 
 // Register a new user
 exports.register = async (req, res) => {
   const { name, email, password, role } = req.body;
-  console.log('h',req.body)
+  console.log('h', req.body)
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -15,73 +15,37 @@ exports.register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ FIX: Explicitly set the 'isApproved' status for clarity and reliability.
-    // create user as unverified
-    const user = new User({ name, email, password: hashedPassword, verified: false, role, isApproved: role === 'student' ? false : true });
+    // ✅ FIX: Create user as verified since OTP is removed
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      verified: true, // <-- Set to true
+      role,
+      isApproved: role === 'student' ? false : true
+    });
     await user.save();
 
-    // Generate and send OTP
-    await exports.generateOTP({ body: { email } }, res);
+    // Respond with success directly
+    res.status(201).json({ success: true, message: 'Registration successful. You can now log in.' });
 
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Generate OTP
-exports.generateOTP = async (req, res) => {
-  const { email } = req.body;
-  try {
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ error: 'User not found' });
+// Generate OTP (REMOVED)
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    user.otp = otp;
-    user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-    await user.save();
+// Verify OTP (REMOVED)
 
-    // Send OTP via email
-    await sendEmail(user.email, "Your OTP Code", `Your OTP is: ${otp}`);
-
-    res.status(200).json({ success: true, message: 'OTP sent to your email. Please verify your account.' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// Verify OTP
-exports.verifyOTP = async (req, res) => {
-  const { email, otp } = req.body;
-  try {
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ error: 'User not found' });
-
-    if (user.otp !== otp || Date.now() > user.otpExpires) {
-      return res.status(400).json({ error: 'Invalid or expired OTP' });
-    }
-
-    user.verified = true;
-    user.otp = undefined;
-    user.otpExpires = undefined;
-    await user.save();
-
-    res.status(200).json({ success: true, message: 'Account verified successfully' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// Login an existing user (only if verified)
+// Login an existing user
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email }).select('+password');
     if (!user) return res.status(400).json({ error: 'User not found' });
 
-    // Ensure user is verified
-    if (!user.verified) {
-      return res.status(403).json({ error: 'Please verify your account before logging in' });
-    }
+    // Ensure user is verified (REMOVED)
 
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ error: 'Invalid credentials' });

@@ -13,12 +13,6 @@ router.post('/login', login);
 // POST /api/auth/logout
 router.post('/logout', logout);
 
-// POST /api/auth/otp
-router.post('/otp', generateOTP);
-
-// POST /api/auth/verify-otp
-router.post('/verify-otp', verifyOTP);
-
 // Example of a protected teacher route
 router.get('/teacher-only', protect, isTeacher, (req, res) => {
     res.status(200).json({ success: true, message: 'Welcome, Teacher!' });

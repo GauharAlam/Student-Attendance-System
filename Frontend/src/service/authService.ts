@@ -25,7 +25,4 @@ export const registerUser = async (userData: object) => {
     return response.data;
 };
 
-export const verifyOtp = async (otpData: object) => {
-    const response = await axiosInstance.post('/auth/verify-otp', otpData);
-    return response.data;
-};
+// REMOVED verifyOtp function
